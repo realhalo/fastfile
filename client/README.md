@@ -12,6 +12,6 @@ Fastfile client is the "ffcp" shell command.  The following steps illustrate how
 
 3. Test functionality using a key provided by a remote (server-side) fastfile installation:
 
-	ffcp server.com <KEY_HERE> <PATH_TO_FILE_TO_SEND_HERE>
+		ffcp server.com [KEY_HERE] [PATH_OF_FILE_TO_SEND_HERE]
 
 4. View the api subdirectory of this package to see if your desired programming language is supported.
