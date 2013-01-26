@@ -1,0 +1,28 @@
+POOLDIR=@POOLDIR@
+APACHEGROUP=@APACHEGROUP@
+PREFIX=@prefix@
+INSTALL=@INSTALL@
+
+all:
+	cd ffpool && make && cd ../mod_fastfile && make && cd ..
+clean:
+	cd ffpool && make clean && cd ../mod_fastfile && make clean && cd .. && rm -f Makefile config.h config.cache config.status config.log fastfile.conf
+
+distclean: clean
+
+install: all
+	mkdir -p ${POOLDIR} 1>/dev/null 2>&1;
+	chown root:${APACHEGROUP} ${POOLDIR};
+	chmod 2733 ${POOLDIR};
+	cp -f fastfile.conf /etc/;
+	chown root:root /etc/fastfile.conf;
+	chmod 644 /etc/fastfile.conf;
+
+	cd ffpool && make install && cd ../mod_fastfile && make stop install start && cd ..;
+
+	$(INSTALL) -o 0 -g 0 -m 755 ffsetfile ${PREFIX}/bin/;
+
+	@killall -9 ffpool 1>/dev/null 2>&1 || true;
+	${PREFIX}/sbin/ffpool || true;
+
+

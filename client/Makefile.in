@@ -1,0 +1,18 @@
+SOURCE = ffcp.c
+OUTPUT = ffcp
+CC = gcc
+LIBS = @LIBS@ 
+CFLAGS = @CFLAGS@
+PREFIX = @prefix@
+INSTALL = @INSTALL@
+
+all: ffcp
+
+ffcp:
+	$(CC) $(CFLAGS) $(SOURCE) -o $(OUTPUT) $(OBJECTS) $(LIBS)
+
+clean:
+	rm -f ffcp Makefile config.h config.cache config.status config.log
+
+install: all
+	$(INSTALL) -o 0 -g 0 -m 755 ffcp ${PREFIX}/bin/

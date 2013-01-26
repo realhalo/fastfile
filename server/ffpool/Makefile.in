@@ -1,0 +1,32 @@
+SOURCE = ffpool.c
+OUTPUT = ffpool
+CC = gcc
+LIBS = @LIBS@
+CFLAGS = 
+PREFIX = @prefix@
+INSTALL = @INSTALL@
+
+all: ffcp
+
+ffcp:
+	$(CC) $(CFLAGS) $(SOURCE) -o $(OUTPUT) $(OBJECTS) $(LIBS)
+
+clean:
+	rm -f ffpool Makefile config.h config.cache config.status config.log
+
+install: all
+	$(INSTALL) -o 0 -g 0 -m 755 ffpool ${PREFIX}/sbin/;
+	@crontab -l 1>/tmp/ffpool.tab 2>/dev/null;
+	@grep ffpool /tmp/ffpool.tab 1>/dev/null 2>&1; if [ $$? -ne 0 ]; then \
+		echo "*/5 * * * * ${PREFIX}/sbin/ffpool" >>/tmp/ffpool.tab; \
+		crontab /tmp/ffpool.tab; \
+	fi;
+	@rm -f /tmp/ffpool.tab;
+
+	@echo "";
+	@echo "ENSURE THE FOLLOWING LINE IS IN YOUR (root) CRONTAB(done automatically if possible):";
+	@echo "------------------------------------------------------------------------------------";
+	@echo "";
+	@echo "*/5 * * * * ${PREFIX}/sbin/ffpool";
+	@echo "";
+	@echo "------------------------------------------------------------------------------------";

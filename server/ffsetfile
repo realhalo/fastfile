@@ -1,0 +1,87 @@
+#!/bin/bash
+# [fastfile] ffsetfile(.sh) :: CLI script to set a local file to be created by mod_fastfile.
+# Copyright (C) 2012 fakehalo [v9@fakehalo.us]
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+# imported defines from fastfile.h:
+FF_KEY_LEN=32
+FF_KEY_CHARS="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+FF_CONF_PATH="/etc/fastfile.conf"
+FF_POOL_FILE_MODE="660"
+
+if [ -z "$1" ]; then
+	echo "usage: $0 <file> [max_filesize]"
+	exit 1
+fi
+
+# grab the pooldir out of the config file and make up a key that doesnt currently exist.
+POOLDIR=$(grep '^[ \t]*pool[ \t]*=' $FF_CONF_PATH 2>/dev/null | cut -d= -f2 | sed 's/^[ \t]*//g;s/[ \t]*$//g;')
+OVERWRITE=$(grep '^[ \t]*overwrite[ \t]*=' $FF_CONF_PATH 2>/dev/null | cut -d= -f2 | sed 's/^[ \t]*//g;s/[ \t]*$//g;')
+if [ ! -d "$POOLDIR" ]; then
+	echo "error: could not find (existing) pool directory: $FF_CONF_PATH"
+	exit 1
+fi
+while true; do
+	KEY=$(tr -dc $FF_KEY_CHARS < /dev/urandom | head -c $FF_KEY_LEN)
+	POOLKEY="$POOLDIR/$KEY"
+	POOLDAT="$POOLKEY.dat"
+	POOLLNK="$POOLKEY.lnk"
+	if [ -e "$POOLKEY" -o -e "$POOLDAT" -o -e "$POOLLNK" -o -h "$POOLLNK" ]; then
+		continue
+	fi
+	break
+done
+
+# basic sanity check to make sure the filepath is legit.
+if [ -e "$1" -a "$OVERWRITE" != "yes" ]; then
+	echo "error: file already exists: $1"
+	exit 1
+elif [[ "$1" != /* ]]; then
+	echo "error: file is not an absolute path: $1"
+	exit 1
+fi
+
+# key file and data file need mode 660, explicitly done by chmod but also done here.
+umask 007
+
+# create the data file, try to use the fastest way possible to fill the file first. (dd is slow)
+touch "$POOLDAT"
+if [ "$2" -gt "0" 2>/dev/null ]; then
+	$(truncate -s "$2" "$POOLDAT" 1>/dev/null 2>&1)
+	if [ $? -ne 0 ]; then
+		$(perl -e 'truncate "'$POOLDAT'", '$2';' 1>/dev/null 2>&1)
+		if [ $? -ne 0 ]; then
+			dd if=/dev/zero of="$POOLDAT" bs=1 count="$2" 1>/dev/null 2>&1
+		fi
+	fi
+fi
+chmod "$FF_POOL_FILE_MODE" "$POOLDAT"
+
+# create the link file.
+ln -s "$1" "$POOLLNK"
+
+# create the main key file, now a functional fastfile key.
+touch "$POOLKEY"
+chmod "$FF_POOL_FILE_MODE" "$POOLKEY"
+
+# print the key to stdout for the user to handle if all the files are good to go.
+if [ -e "$POOLKEY" -a -e "$POOLDAT" -a -h "$POOLLNK" ]; then
+	echo "$KEY"
+	exit 0
+else
+	echo "error: failed to create key: $KEY"
+	exit 1
+fi

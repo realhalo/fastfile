@@ -1,0 +1,19 @@
+# NOTE: changes made to this file do NOT require restarting of any daemons.
+
+# pool directory for files to be held/built in while the transfer is occuring.
+pool = @POOLDIR@
+
+# the group/gid of the apache process is needed for mod_fastfile to write to files. (default=www-data)
+apache_group = @APACHEGROUP@
+
+
+# --- the following options refer to the ffpool (background) daemon only ---
+
+# time in seconds allowed for files to sit in pool directory idle before deletion. (default=86400, 0=indefinite)
+#ttl = 3600
+
+# mode for files to be chmod'd to before being moved to destination. (default=0600)
+#mode = 0744
+
+# allow overwriting of the destination file if it already exists. (default=no)
+#overwrite = yes

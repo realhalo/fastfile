@@ -1,0 +1,54 @@
+APXS=@APXS@
+APACHECTL=@APACHECTL@
+
+builddir=.
+installbuilddir=@AP_INSTALLBUILDDIR@
+libexecdir=@AP_LIBEXECDIR@
+sysconfdir=@AP_SYSCONFDIR@
+top_srcdir=@AP_TOP_SRCDIR@
+top_builddir=@AP_TOP_BUILDDIR@
+include @AP_INSTALLBUILDDIR@/special.mk
+
+#   the default target
+all: local-shared-build
+
+#   install the shared object file into Apache 
+install: install-modules-yes
+	@grep fastfile "${sysconfdir}/apache2.conf" 1>/dev/null 2>&1; if [ -f "${sysconfdir}/apache2.conf" -a $$? -ne 0 ]; then \
+		echo "LoadModule fastfile_module ${libexecdir}/mod_fastfile.so" >>${sysconfdir}/apache2.conf; \
+		echo "<Location /__ff>" >>${sysconfdir}/apache2.conf; \
+		echo "  SetHandler fastfile" >>${sysconfdir}/apache2.conf; \
+		echo "</Location>" >>${sysconfdir}/apache2.conf; \
+	fi;
+	@echo "";
+	@echo "ENSURE THE FOLLOWING LINES ARE IN YOUR APACHE2.CONF(done automatically if possible):";
+	@echo "------------------------------------------------------------------------------------";
+	@echo "";
+	@echo "LoadModule fastfile_module ${libexecdir}/mod_fastfile.so";
+	@echo "<Location /__ff>";
+	@echo "  SetHandler fastfile";
+	@echo "</Location>";
+	@echo "";
+	@echo "------------------------------------------------------------------------------------";
+
+#   cleanup
+clean:
+	-rm -f Makefile mod_fastfile.o mod_fastfile.lo mod_fastfile.slo mod_fastfile.la 
+
+#   simple test
+test: reload
+	lynx -mime_header http://localhost/__ff
+
+#   install and activate shared object by reloading Apache to
+#   force a reload of the shared object file
+reload: install restart
+
+#   the general Apache start/restart/stop
+#   procedures
+start:
+	$(APACHECTL) start
+restart:
+	$(APACHECTL) restart
+stop:
+	$(APACHECTL) stop
+
