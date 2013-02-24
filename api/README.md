@@ -7,3 +7,5 @@ PHP: fastfile.php
 Python: fastfile.py
   
 Ruby: fastfile.rb
+
+C#: fastfile.cs
