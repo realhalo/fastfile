@@ -1,0 +1,1 @@
+This is an (example) windows protocol handler to handle fastfile:// URIs.  The Visual Studio (C#) project contained within allows users to select a file to upload to a fastfile server and displays the transfer status(percentage) during the process of the send using a pre-compiled cygwin version of ffcp.exe.
