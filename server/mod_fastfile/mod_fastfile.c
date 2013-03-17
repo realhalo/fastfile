@@ -43,7 +43,7 @@ static char fastfile_key_validate(unsigned char *key) {
 }
 
 /* calculate crc32; based on intel's performance boosted crc32. */
-static unsigned int ff_crc32_64bit(void *data, unsigned long long len, unsigned int pcrc) {
+static unsigned int fastfile_crc32_64bit(void *data, unsigned long long len, unsigned int pcrc) {
 	unsigned int one, two, *ccrc = (unsigned int *)data, crc = ~pcrc;
 	unsigned char *c;
 
@@ -319,7 +319,7 @@ static int fastfile_pipe_to_datfile(request_rec *r, unsigned int chunk, apr_file
 	crc = FF_CRC_INIT;
 	while((len = ap_get_client_block(r, buf, FF_BUFSIZE_LARGE < expected_chunksize ? FF_BUFSIZE_LARGE : expected_chunksize)) > 0){
 		/* add this buffer segment to our crc calculation. */
-		crc = ff_crc32_64bit(buf, len, crc);
+		crc = fastfile_crc32_64bit(buf, len, crc);
 
 		/* proxy data to the destination datfile. */
 		if(fastfile_write(fd, buf, len))

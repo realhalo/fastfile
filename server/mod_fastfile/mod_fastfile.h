@@ -17,7 +17,7 @@
 **/
 
 static char fastfile_key_validate(unsigned char *);
-static unsigned int ff_crc32_64bit(void *, unsigned long long, unsigned int);
+static unsigned int fastfile_crc32_64bit(void *, unsigned long long, unsigned int);
 static char fastfile_open(request_rec *, char *, apr_file_t **, apr_fileperms_t);
 static char fastfile_seek(apr_file_t **, unsigned long long);
 static apr_size_t fastfile_write(apr_file_t **, void *, apr_size_t);
