@@ -590,17 +590,17 @@ char *ff_get_headers(unsigned int content_length) {
 		s += strlen(ff_data.headers[i]->name);
 		s += 2; /* ": " */
 		s += strlen(ff_data.headers[i]->value);
-		s += 1; /* "\n" */
+		s += 2; /* "\r\n" */
 	}
 	if(content_length)
-		s += 27; /* strlen(Content-Length: UINT_MAX\n); */
+		s += 28; /* strlen(Content-Length: UINT_MAX\r\n); */
 	if(!(buf = malloc(s + 1)))
 		ff_error(FF_MSG_ERR, "failed to allocate memory.");
 	memset(buf, 0, s + 1);
 	for(i=0; i < ff_data.headers_i; i++)
-		sprintf(buf+strlen(buf), "%s: %s\n", ff_data.headers[i]->name, ff_data.headers[i]->value);
+		sprintf(buf+strlen(buf), "%s: %s\r\n", ff_data.headers[i]->name, ff_data.headers[i]->value);
 	if(content_length)
-		sprintf(buf+strlen(buf), "Content-Length: %u\n", content_length);
+		sprintf(buf+strlen(buf), "Content-Length: %u\r\n", content_length);
 	return(buf);
 }
 
@@ -608,16 +608,16 @@ char *ff_get_headers(unsigned int content_length) {
 char *ff_get_request_string(unsigned int chunk) {
 	char *req;
 	unsigned int s;
-	s = 6 + strlen(ff_data.location) + 1 + strlen(ff_data.key) + 10; /* strlen(POST /location/key HTTP/1.1\n) */
+	s = 6 + strlen(ff_data.location) + 1 + strlen(ff_data.key) + 11; /* strlen(POST /location/key HTTP/1.1\r\n) */
 	if(chunk)
 		s += 11; /* "/" + UINT_MAX */
 	if(!(req = malloc(s + 1)))
 		ff_error(FF_MSG_ERR, "failed to allocate memory.");
 	memset(req, 0, s + 1);
 	if(chunk)
-		sprintf(req, "POST /%s/%s/%u HTTP/1.1\n", ff_data.location, ff_data.key, chunk);
+		sprintf(req, "POST /%s/%s/%u HTTP/1.1\r\n", ff_data.location, ff_data.key, chunk);
 	else
-		sprintf(req, "POST /%s/%s HTTP/1.1\n", ff_data.location, ff_data.key);
+		sprintf(req, "POST /%s/%s HTTP/1.1\r\n", ff_data.location, ff_data.key);
 	return(req);
 }
 
@@ -677,7 +677,7 @@ void ff_send_manifesto() {
 		if(
 			SSL_write(ssl_handle, req, strlen(req)) != strlen(req) ||
 			SSL_write(ssl_handle, headers, strlen(headers)) != strlen(headers) ||
-			SSL_write(ssl_handle, "\n", 1) != 1 ||
+			SSL_write(ssl_handle, "\r\n", 2) != 2 ||
 			SSL_write(ssl_handle, ff_data.manifesto_buf, ff_data.manifesto_len) != ff_data.manifesto_len
 		)
 			ff_error(FF_MSG_ERR, "failed to write (manifesto) https request to the socket. (SSL)");
@@ -690,7 +690,7 @@ void ff_send_manifesto() {
 	if(
 		write(fd, req, strlen(req)) != strlen(req) ||
 		write(fd, headers, strlen(headers)) != strlen(headers) ||
-		write(fd, "\n", 1) != 1 ||
+		write(fd, "\r\n", 2) != 2 ||
 		write(fd, ff_data.manifesto_buf, ff_data.manifesto_len) != ff_data.manifesto_len
 	)
 		ff_error(FF_MSG_ERR, "failed to write (manifesto) http request to the socket.");
@@ -914,14 +914,14 @@ char ff_sock_send_request(int s) {
 	if(ff_data.ssl) {
 		if(SSL_write(ff_data.socks[s]->ssl_handle, req, strlen(req)) != strlen(req) ||
 		SSL_write(ff_data.socks[s]->ssl_handle, headers, strlen(headers)) != strlen(headers) ||
-		SSL_write(ff_data.socks[s]->ssl_handle, "\n", 1) != 1)
+		SSL_write(ff_data.socks[s]->ssl_handle, "\r\n", 2) != 2)
 			ret = 1;
 	}
 	else {
 #endif
 		if(write(ff_data.socks[s]->fd, req, strlen(req)) != strlen(req) ||
 		write(ff_data.socks[s]->fd, headers, strlen(headers)) != strlen(headers) ||
-		write(ff_data.socks[s]->fd, "\n", 1) != 1)
+		write(ff_data.socks[s]->fd, "\r\n", 2) != 2)
 			ret = 1;
 #ifdef FF_HAVE_SSL
 	}
